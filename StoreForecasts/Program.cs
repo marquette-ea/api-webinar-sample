@@ -20,7 +20,7 @@ namespace ApiSample {
       // Console.WriteLine($"Wrote {nRecordsStored} records to the database");
     }
 
-    static async Task<LoadForecast> GetNewForecastRecords() {
+    static async Task<IEnumerable<LoadForecast>> GetNewForecastRecords() {
       throw new NotImplementedException();
     }
 
