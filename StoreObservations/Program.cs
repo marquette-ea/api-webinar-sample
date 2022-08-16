@@ -6,7 +6,6 @@ using ApiSample.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
 namespace ApiSample {
   // The JSON type we receive from the MCast™ API
@@ -23,11 +22,6 @@ namespace ApiSample {
     static readonly string MCastDomain = "demo-gas.mea-analytics.tools";
     static DateOnly StartDate = new DateOnly(2022,01,01);
     static readonly HttpClient Client = new HttpClient();
-
-    // This lets us use PascalCase for our field names in the records defined above, which is standard for C#
-    // even though the JSON we receive from the API uses camelCase.
-    static readonly JsonSerializerSettings SerializerSettings = 
-      new JsonSerializerSettings() { ContractResolver = new CamelCasePropertyNamesContractResolver() };
 
     public static async Task Main(string[] args) {
 
