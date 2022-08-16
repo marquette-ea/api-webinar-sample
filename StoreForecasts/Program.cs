@@ -5,7 +5,7 @@ using dotenv.net;
 using ApiSample.Schema;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace ApiSample {
   record ForecastJson(
@@ -14,7 +14,7 @@ namespace ApiSample {
     DateTime UtcRetrievalTimestamp,
     DateTime UtcForecastTimestamp,
     bool IsPinned,
-    int Idf,
+    string Idf,
     List<ForecastValueJson> LoadForecast
   ) {}
 
@@ -31,11 +31,6 @@ namespace ApiSample {
     static DateOnly StartDate = new DateOnly(2022,01,01);
     static readonly HttpClient Client = new HttpClient();
 
-    // This lets us use PascalCase for our field names in the records defined above, which is standard for C#
-    // even though the JSON we receive from the API uses camelCase.
-    static readonly JsonSerializerSettings SerializerSettings = 
-      new JsonSerializerSettings() { ContractResolver = new CamelCasePropertyNamesContractResolver() };
-
     public static async Task Main(string[] args) {
 
       DotEnv.Load(new DotEnvOptions(probeForEnv:true, probeLevelsToSearch:5));
@@ -43,17 +38,76 @@ namespace ApiSample {
       Client.DefaultRequestHeaders.Accept.Clear();
       Client.DefaultRequestHeaders.Add("x-api-key", ApiKey);
 
-      // var recordsToStore = await GetNewForecastRecords();
+      var fcsts = await GetNewForecastRecords();
 
-      // var (nFcstRecordsStored, nFcstValueRecordsStored) = await StoreNewRecords(fcstRecords, fcstValueRecords);
-      // Console.WriteLine($"Wrote {nFcstRecordsStored} forecast records to the database");
-      // Console.WriteLine($"Wrote {nFcstValueRecordsStored} forecast value records to the database");
+      var recordsStored = await StoreNewRecords(fcsts);
+
+      Console.WriteLine($"Wrote {recordsStored} records to the database");
     }
 
-    record ForecastData(IEnumerable<LoadForecast> FcstRecords, IEnumerable<LoadForecastValue> FcstValueRecords) { }
+    static async Task<IEnumerable<LoadForecast>> GetNewForecastRecords() {
+      var opAreas = await GetOpAreas();
+      var opAreaIDsByName = opAreas.ToDictionary(keySelector: oa => oa.Name, elementSelector: oa => oa.Id);
+      var newApiFcstRecords = await GetApiForecasts(opAreas);
+      return from newRecord in newApiFcstRecords select ApiRecordToDbRecords(newRecord, opAreaIDsByName);
+    }
 
-    static async Task<ForecastData> GetNewForecastRecords() {
-      throw new NotImplementedException();
+    static async Task<List<ForecastJson>> GetApiForecasts(IEnumerable<OpArea> opAreas) {
+      var maxDate = DateOnly.FromDateTime(DateTime.Today);
+
+      var allForecasts = new List<ForecastJson>();
+      foreach (var opArea in opAreas) { 
+        var latestDate = await LoadLatestDateFromDatabase(opArea.Id);
+        var minDate = latestDate?.AddDays(1) ?? StartDate;
+
+        var query = new Dictionary<string, string> {  
+          ["operatingArea"] = opArea.Name,
+          ["startDate"] = minDate.ToShortDateString(),
+          ["endDate"] = maxDate.ToShortDateString(),
+          ["idf"] = "Nom Plan",
+        };
+        var uri = QueryHelpers.AddQueryString($"https://{MCastDomain}/api/v1/daily/forecasted-load", query);
+        var response = await Client.GetAsync(uri);
+        Console.WriteLine(response.ToString());
+        response.EnsureSuccessStatusCode();
+        var json = await response.Content.ReadAsStringAsync();
+        var forecasts = JsonConvert.DeserializeObject<List<ForecastJson>>(json)!;
+        allForecasts.AddRange(forecasts);
+      }
+
+      return allForecasts;
+    }
+
+    static LoadForecast ApiRecordToDbRecords(ForecastJson json, IDictionary<string, short> opAreaIDsByName) {
+      var fcstRecord = 
+        new LoadForecast { 
+          Date = json.ForecastStartDate.ToDateTime(TimeOnly.MinValue),
+          OpArea = opAreaIDsByName[json.OperatingArea],
+        };
+
+      var valueRecords = 
+        ( 
+          from value in json.LoadForecast 
+          select new LoadForecastValue {
+            Horizon = (byte)value.DaysOut,
+            Value = value.Forecast,
+            ForecastNavigation = fcstRecord,
+          }
+        ).ToList();
+
+      fcstRecord.LoadForecastValues = valueRecords;
+
+      return fcstRecord;
+    }
+
+
+    static Task<List<OpArea>> GetOpAreas() { 
+      var ctx = GetCtx();
+      return
+        (
+          from row in ctx.OpAreas
+          select row
+        ).ToListAsync();
     }
 
     static YourGasUtilityContext GetCtx() {
@@ -64,11 +118,12 @@ namespace ApiSample {
       );
     }
 
-    static async Task<DateOnly?> LoadLatestDateFromDatabase() {
+    static async Task<DateOnly?> LoadLatestDateFromDatabase(short opArea) {
       var ctx = GetCtx();
       var lastDate = await
         ( 
           from row in ctx.LoadForecasts
+          where row.OpArea == opArea
           orderby row.Date descending
           select (DateTime?)row.Date
         ).FirstOrDefaultAsync();
@@ -81,13 +136,11 @@ namespace ApiSample {
       }
     }
 
-    static async Task<(int, int)> StoreNewRecords(ForecastData fcsts) {
+    static async Task<int> StoreNewRecords(IEnumerable<LoadForecast> fcsts) {
       var ctx = GetCtx();
-      ctx.LoadForecasts.AddRange(fcsts.FcstRecords);
+      ctx.LoadForecasts.AddRange(fcsts);
       var nFcstRecordsStored = await ctx.SaveChangesAsync();
-      ctx.LoadForecastValues.AddRange(fcsts.FcstValueRecords);
-      var nFcstValueRecordsStored = await ctx.SaveChangesAsync();
-      return (nFcstRecordsStored, nFcstValueRecordsStored);
+      return nFcstRecordsStored;
     }
   }
 }
