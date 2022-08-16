@@ -52,7 +52,7 @@ namespace ApiSample {
 
     record ForecastData(IEnumerable<LoadForecast> FcstRecords, IEnumerable<LoadForecastValue> FcstValueRecords) { }
 
-    static async Task<ForecastData> GetNewObservationRecords() {
+    static async Task<ForecastData> GetNewForecastRecords() {
       throw new NotImplementedException();
     }
 
