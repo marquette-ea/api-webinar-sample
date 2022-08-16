@@ -15,7 +15,7 @@ namespace ApiSample {
     DateOnly Date,
     double NetLoad,
     DateTime UtcRetrievalTimestamp
-  );
+  ) {}
 
   class Program {
     static string ConnectionString => Environment.GetEnvironmentVariable("CONN_STRING")!;
