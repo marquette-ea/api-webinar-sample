@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using dotenv.net;
 using ApiSample.Schema;
@@ -38,11 +39,11 @@ namespace ApiSample {
       Client.DefaultRequestHeaders.Accept.Clear();
       Client.DefaultRequestHeaders.Add("x-api-key", ApiKey);
 
-      var fcsts = await GetNewForecastRecords();
+      var recordsToStore = await GetNewForecastRecords();
 
-      var recordsStored = await StoreNewRecords(fcsts);
+      var nRecordsStored = await StoreNewRecords(recordsToStore);
 
-      Console.WriteLine($"Wrote {recordsStored} records to the database");
+      Console.WriteLine($"Wrote {nRecordsStored} records to the database");
     }
 
     static async Task<IEnumerable<LoadForecast>> GetNewForecastRecords() {
@@ -103,11 +104,7 @@ namespace ApiSample {
 
     static Task<List<OpArea>> GetOpAreas() { 
       var ctx = GetCtx();
-      return
-        (
-          from row in ctx.OpAreas
-          select row
-        ).ToListAsync();
+      return ctx.OpAreas.ToListAsync();
     }
 
     static YourGasUtilityContext GetCtx() {
@@ -136,11 +133,10 @@ namespace ApiSample {
       }
     }
 
-    static async Task<int> StoreNewRecords(IEnumerable<LoadForecast> fcsts) {
+    static Task<int> StoreNewRecords(IEnumerable<LoadForecast> fcsts) {
       var ctx = GetCtx();
       ctx.LoadForecasts.AddRange(fcsts);
-      var nFcstRecordsStored = await ctx.SaveChangesAsync();
-      return nFcstRecordsStored;
+      return ctx.SaveChangesAsync();
     }
   }
 }
