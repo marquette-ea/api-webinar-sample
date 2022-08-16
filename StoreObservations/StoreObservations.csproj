@@ -15,8 +15,8 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>ApiSample.StoreForecasts</RootNamespace>
-    <AssemblyName>ApiSample.StoreForecasts</AssemblyName>
+    <RootNamespace>ApiSample.StoreObservations</RootNamespace>
+    <AssemblyName>ApiSample.StoreObservations</AssemblyName>
   </PropertyGroup>
 
 </Project>

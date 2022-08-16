@@ -36,3 +36,8 @@ CREATE TABLE [LoadForecastValue] (
   CONSTRAINT [PK_LoadForecastValue] PRIMARY KEY ([Forecast], [Horizon]),
   CONSTRAINT [FK_LoadForecastValue_LoadForecast] FOREIGN KEY ([Forecast]) REFERENCES [LoadForecast]([ID])
 );
+GO
+
+INSERT INTO [OpArea] ([Name]) VALUES ('Metropolis');
+INSERT INTO [OpArea] ([Name]) VALUES ('Smallville');
+GO
