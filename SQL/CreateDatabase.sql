@@ -36,3 +36,11 @@ CREATE TABLE [LoadForecastValue] (
   CONSTRAINT [PK_LoadForecastValue] PRIMARY KEY ([Forecast], [Horizon]),
   CONSTRAINT [FK_LoadForecastValue_LoadForecast] FOREIGN KEY ([Forecast]) REFERENCES [LoadForecast]([ID])
 );
+GO
+
+-- Change this section to use your own Op Areas to run with your own MCast™ API.
+-- You can use the operating-areas API route and run it via the API Reference page if you want to see 
+-- the names for each op area that the MCast™ API will recognize.
+INSERT INTO [OpArea] ([Name]) VALUES ('Metropolis');
+INSERT INTO [OpArea] ([Name]) VALUES ('Smallville');
+GO

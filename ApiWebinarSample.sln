@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Schema", "Schema\Schema.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StoreForecasts", "StoreForecasts\StoreForecasts.csproj", "{FA14661F-38BC-4E47-848D-7165334FE2C3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StoreObservations", "StoreObservations\StoreObservations.csproj", "{51881A73-8BC7-4908-B551-C5CA514497D0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{FA14661F-38BC-4E47-848D-7165334FE2C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FA14661F-38BC-4E47-848D-7165334FE2C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FA14661F-38BC-4E47-848D-7165334FE2C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51881A73-8BC7-4908-B551-C5CA514497D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51881A73-8BC7-4908-B551-C5CA514497D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51881A73-8BC7-4908-B551-C5CA514497D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51881A73-8BC7-4908-B551-C5CA514497D0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

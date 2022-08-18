@@ -6,6 +6,8 @@
 
   <ItemGroup>
     <PackageReference Include="dotenv.net" Version="3.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2-beta1" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -13,8 +15,8 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>ApiSample.StoreForecasts</RootNamespace>
-    <AssemblyName>ApiSample.StoreForecasts</AssemblyName>
+    <RootNamespace>ApiSample.StoreObservations</RootNamespace>
+    <AssemblyName>ApiSample.StoreObservations</AssemblyName>
   </PropertyGroup>
 
 </Project>
