@@ -32,6 +32,7 @@ namespace ApiSample {
     }
 
     static async Task<IEnumerable<ApiForecastData>> GetApiForecastData(IEnumerable<OpArea> opAreas, DateOnly minDate) {
+      throw new NotImplementedException();
     }
 
     static LoadForecast ApiRecordToDbRecords(ApiForecastData apiRecord, IDictionary<string, short> opAreaIDsByName) {
