@@ -9,20 +9,27 @@ using Microsoft.EntityFrameworkCore;
 namespace ApiSample {
   class Program {
     static string ConnectionString => Environment.GetEnvironmentVariable("CONN_STRING")!;
+    static DateOnly StartDate = new DateOnly(2022,01,01);
 
     public static async Task Main(string[] args) {
 
       DotEnv.Load(new DotEnvOptions(probeForEnv:true, probeLevelsToSearch:5));
 
-      // var recordsToStore = await GetNewForecastRecords();
+      var opAreas = await GetOpAreas();
+      var latestDate = await LoadLatestDateFromDatabase();
+      var minDate = latestDate?.AddDays(1) ?? StartDate;
+      var recordsToStore = await GetNewForecastRecords(opAreas, minDate);
 
-      // var nRecordsStored = await StoreNewRecords(recordsToStore);
-      // Console.WriteLine($"Wrote {nRecordsStored} records to the database");
+      var nRecordsStored = await StoreNewRecords(recordsToStore);
+      Console.WriteLine($"Wrote {nRecordsStored} records to the database");
     }
 
-    static async Task<IEnumerable<LoadForecast>> GetNewForecastRecords() {
+    static async Task<IEnumerable<LoadForecast>> GetNewForecastRecords(IEnumerable<OpArea> opAreas, DateOnly minDate) {
       throw new NotImplementedException();
     }
+
+    // ---------------------------------------------
+    // DB Operations:
 
     static YourGasUtilityContext GetCtx() {
       return new YourGasUtilityContext(
@@ -30,14 +37,18 @@ namespace ApiSample {
           .UseSqlServer(ConnectionString)
           .Options
       );
+    } 
+
+    static Task<List<OpArea>> GetOpAreas() { 
+      var ctx = GetCtx();
+      return ctx.OpAreas.ToListAsync();
     }
 
-    static async Task<DateOnly?> LoadLatestDateFromDatabase(short opArea) {
+    static async Task<DateOnly?> LoadLatestDateFromDatabase() {
       var ctx = GetCtx();
       var lastDate = await
         ( 
           from row in ctx.LoadForecasts
-          where row.OpArea == opArea
           orderby row.Date descending
           select (DateTime?)row.Date
         ).FirstOrDefaultAsync();
