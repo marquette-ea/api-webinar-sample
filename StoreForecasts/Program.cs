@@ -7,6 +7,7 @@ using ApiSample.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace ApiSample {
+  record ApiForecastData ();
   class Program {
     static string ConnectionString => Environment.GetEnvironmentVariable("CONN_STRING")!;
     static DateOnly StartDate = new DateOnly(2022,01,01);
@@ -25,6 +26,15 @@ namespace ApiSample {
     }
 
     static async Task<IEnumerable<LoadForecast>> GetNewForecastRecords(IEnumerable<OpArea> opAreas, DateOnly minDate) {
+      var newApiFcstRecords = await GetApiForecastData(opAreas, minDate);
+      var opAreaIDsByName = opAreas.ToDictionary(keySelector: oa => oa.Name, elementSelector: oa => oa.Id);
+      return from newRecord in newApiFcstRecords select ApiRecordToDbRecords(newRecord, opAreaIDsByName);
+    }
+
+    static async Task<IEnumerable<ApiForecastData>> GetApiForecastData(IEnumerable<OpArea> opAreas, DateOnly minDate) {
+    }
+
+    static LoadForecast ApiRecordToDbRecords(ApiForecastData apiRecord, IDictionary<string, short> opAreaIDsByName) {
       throw new NotImplementedException();
     }
 
