@@ -5,12 +5,29 @@ using System.Collections.Generic;
 using dotenv.net;
 using ApiSample.Schema;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.WebUtilities;
+using Newtonsoft.Json;
 
 namespace ApiSample {
-  record ApiForecastData ();
+  record ApiForecastData (
+    string OperatingArea,
+    DateOnly ForecastStartDate,
+    string Idf,
+    List<ApiForecastDataValue> LoadForecast
+  ) {}
+
+  record ApiForecastDataValue (
+    DateOnly Date,
+    int DaysOut,
+    double Forecast
+  ) {}
+
   class Program {
     static string ConnectionString => Environment.GetEnvironmentVariable("CONN_STRING")!;
+    static string ApiKey => Environment.GetEnvironmentVariable("MCAST_API_KEY")!;
     static DateOnly StartDate = new DateOnly(2022,01,01);
+    static readonly string MCastDomain = "demo-gas.mea-analytics.tools";
+    static readonly HttpClient Client = new HttpClient();
 
     public static async Task Main(string[] args) {
 
@@ -32,11 +49,52 @@ namespace ApiSample {
     }
 
     static async Task<IEnumerable<ApiForecastData>> GetApiForecastData(IEnumerable<OpArea> opAreas, DateOnly minDate) {
-      throw new NotImplementedException();
+      Client.DefaultRequestHeaders.Accept.Clear();
+      Client.DefaultRequestHeaders.Add("x-api-key", ApiKey);
+
+      var maxDate = DateTime.Today;
+
+      var allForecasts = new List<ApiForecastData>();
+      foreach (var opArea in opAreas) {
+        Console.WriteLine($"Retrieving forecast data for {opArea.Name}...");
+
+        var query = new Dictionary<string, string> {  
+          ["operatingArea"] = opArea.Name,
+          ["startDate"] = minDate.ToShortDateString(),
+          ["endDate"] = maxDate.ToShortDateString(),
+          ["idf"] = "Nom Plan",
+        };
+        var uri = QueryHelpers.AddQueryString($"https://{MCastDomain}/api/v1/daily/forecasted-load", query);
+        var response = await Client.GetAsync(uri);
+        Console.WriteLine(response.ToString());
+        response.EnsureSuccessStatusCode();
+        var json = await response.Content.ReadAsStringAsync();
+        var fcsts = JsonConvert.DeserializeObject<List<ApiForecastData>>(json)!;
+        allForecasts.AddRange(fcsts);
+      }
+      return allForecasts;
     }
 
     static LoadForecast ApiRecordToDbRecords(ApiForecastData apiRecord, IDictionary<string, short> opAreaIDsByName) {
-      throw new NotImplementedException();
+      var fcstRecord = 
+        new LoadForecast { 
+          Date = apiRecord.ForecastStartDate.ToDateTime(TimeOnly.MinValue),
+          OpArea = opAreaIDsByName[apiRecord.OperatingArea],
+        };
+
+      var valueRecords = 
+        ( 
+          from value in apiRecord.LoadForecast 
+          select new LoadForecastValue {
+            Horizon = (byte)value.DaysOut,
+            Value = value.Forecast,
+            ForecastNavigation = fcstRecord,
+          }
+        ).ToList();
+
+      fcstRecord.LoadForecastValues = valueRecords;
+
+      return fcstRecord;
     }
 
     // ---------------------------------------------
